@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FATHER_OS</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="desktop">
+  <div class="main-win-wrapper">
+  <div class="main-win">
+    <div class="win-titlebar">
+      <span class="win-title">FATHER_OS — Управление сессией</span>
+      <div class="win-btns">
+        <div class="win-btn">_</div>
+        <div class="win-btn">□</div>
+        <div class="win-btn">×</div>
+      </div>
+    </div>
+    <div class="win-body">
+      <h1>FATHER_OS</h1>
+      <div class="subtitle">версия 6.6.7</div>
+      <hr class="win-separator">
+      <div class="user-info">Пользователь: <span class="user-name">Guest_0</span></div>
+      <div class="status-line">▌ СЕССИЯ АКТИВНА ▐</div>
+      <button class="logout-btn" id="logoutBtn" onclick="startAds(this)">
+        [ ВЫЙТИ ИЗ СИСТЕМЫ ]
+      </button>
+    </div>
+  </div>
+  </div>
+</div>
+
+<div id="desktop-credits">
+  Идея сайта — Father (MaxSkull3) &nbsp;·&nbsp; Навайбкодил — Baicherra, [System Dog]
+</div>
+
+<div id="red-overlay"></div>
+
+<div id="carousel">
+  <button id="carousel-prev" class="carousel-btn">&lt;&lt;</button>
+  <button id="carousel-next" class="carousel-btn">&gt;&gt;</button>
+  <div id="carousel-stage">
+    <div class="carousel-item ci-side" id="ci-0">
+      <span class="carousel-item-name"></span>
+      <img class="carousel-img" src="" alt="" draggable="false">
+      <a class="carousel-item-link" target="_blank" href=""></a>
+    </div>
+    <div class="carousel-item ci-side" id="ci-1">
+      <span class="carousel-item-name"></span>
+      <img class="carousel-img" src="" alt="" draggable="false">
+      <a class="carousel-item-link" target="_blank" href=""></a>
+    </div>
+    <div class="carousel-item ci-center" id="ci-2">
+      <span class="carousel-item-name"></span>
+      <img class="carousel-img" src="" alt="" draggable="false">
+      <a class="carousel-item-link" target="_blank" href=""></a>
+    </div>
+    <div class="carousel-item ci-side" id="ci-3">
+      <span class="carousel-item-name"></span>
+      <img class="carousel-img" src="" alt="" draggable="false">
+      <a class="carousel-item-link" target="_blank" href=""></a>
+    </div>
+    <div class="carousel-item ci-side" id="ci-4">
+      <span class="carousel-item-name"></span>
+      <img class="carousel-img" src="" alt="" draggable="false">
+      <a class="carousel-item-link" target="_blank" href=""></a>
+    </div>
+  </div>
+  <div id="carousel-dots"></div>
+</div>
+
+<div id="ad-progress">
+  <div id="ad-progress-fill"></div>
+  <span id="ad-progress-text">0%</span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

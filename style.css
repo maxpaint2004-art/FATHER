@@ -1,0 +1,484 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0d0d0d;
+  font-family: 'VT323', 'Courier New', monospace;
+  user-select: none;
+  cursor: url('cursor/mouse_pointer.png') 0 0, auto;
+}
+
+/* CRT scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.09) 2px,
+    rgba(0, 0, 0, 0.09) 4px
+  );
+  pointer-events: none;
+  z-index: 99998;
+}
+
+/* ── DESKTOP ── */
+.desktop {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#desktop-credits {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #585858;
+  font-size: min(13px, 1.05vw);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 99996;
+}
+
+/* ── MAIN WINDOW ── */
+.main-win-wrapper {
+  transform-origin: center center;
+}
+
+.main-win {
+  width: min(390px, 92vw);
+  background: #2d2d2d;
+  border: 2px solid #222;
+  border-top-color: #7a7a7a;
+  border-left-color: #7a7a7a;
+  box-shadow: 4px 4px 0 #000, inset 0 0 0 1px #3a3a3a;
+  position: relative;
+  z-index: 10;
+}
+
+.win-titlebar {
+  background: #aa0000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 4px 3px 8px;
+  gap: 6px;
+}
+
+.win-title {
+  color: #fff;
+  font-size: clamp(11px, 2.5vw, 15px);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win-btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.win-btn {
+  width: 18px;
+  height: 15px;
+  background: #555;
+  border: 1px solid #999;
+  border-bottom-color: #333;
+  border-right-color: #333;
+  color: #eee;
+  font-size: 9px;
+  font-family: 'Courier New', monospace;
+  line-height: 14px;
+  text-align: center;
+  cursor: url('cursor/mouse_pointer.png') 0 0, auto;
+}
+
+.win-body {
+  padding: clamp(16px, 5vw, 32px) clamp(14px, 5vw, 28px) clamp(16px, 4vw, 30px);
+  text-align: center;
+  border-top: 1px solid #4a4a4a;
+}
+
+.win-body h1 {
+  color: #cc0000;
+  font-size: clamp(22px, 7vw, 34px);
+  letter-spacing: clamp(2px, 0.8vw, 4px);
+  text-shadow: 0 0 16px #cc000088, 0 0 4px #cc0000;
+  margin-bottom: 2px;
+}
+
+.win-body .subtitle {
+  color: #777;
+  font-size: clamp(11px, 2.5vw, 14px);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.win-separator {
+  border: none;
+  border-top: 1px solid #3a3a3a;
+  border-bottom: 1px solid #666;
+  margin: 16px 0;
+}
+
+.user-info {
+  color: #888;
+  font-size: clamp(11px, 2.5vw, 14px);
+  margin-bottom: 4px;
+}
+
+.user-name {
+  color: #aaa;
+}
+
+.status-line {
+  color: #2c9e2c;
+  font-size: clamp(12px, 2.8vw, 15px);
+  margin-bottom: clamp(14px, 4vw, 26px);
+  animation: blink 1.4s step-end infinite;
+}
+
+.status-line.error {
+  color: #ff8800;
+  animation: blink 0.45s step-end infinite;
+}
+
+.status-line.critical {
+  color: #cc0000;
+  animation: blink 0.15s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.logout-btn {
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: clamp(15px, 4vw, 21px);
+  letter-spacing: 2px;
+  color: #ddd;
+  background: #3a3a3a;
+  border: 2px solid #222;
+  border-top-color: #888;
+  border-left-color: #888;
+  padding: clamp(6px, 2vw, 9px) clamp(14px, 5vw, 26px) clamp(5px, 1.5vw, 7px);
+  cursor: url('cursor/mouse_click.png') 0 0, pointer;
+  display: block;
+  margin: 0 auto;
+  transition: background 0.08s, color 0.08s;
+}
+
+.logout-btn:hover {
+  background: #2e2e2e;
+  color: #fff;
+}
+
+.logout-btn:active {
+  border-top-color: #111;
+  border-left-color: #111;
+  border-bottom-color: #6a6a6a;
+  border-right-color: #6a6a6a;
+}
+
+.logout-btn:disabled {
+  color: #bb0000;
+  cursor: url('cursor/mouse_pointer.png') 0 0, auto;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-5px); }
+  40%       { transform: translateX(5px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+@keyframes winShake {
+  0%, 100% { transform: translate(0, 0); }
+  10%       { transform: translate(-10px, -3px); }
+  20%       { transform: translate(10px, 3px); }
+  30%       { transform: translate(-9px, -2px); }
+  40%       { transform: translate(9px, 2px); }
+  50%       { transform: translate(-7px, -1px); }
+  60%       { transform: translate(7px, 1px); }
+  70%       { transform: translate(-4px, 0); }
+  80%       { transform: translate(4px, 0); }
+  90%       { transform: translate(-2px, 0); }
+}
+
+.main-win.win-shake {
+  animation: winShake 0.55s ease-in-out;
+}
+
+@keyframes siteShake {
+  0%, 100% { transform: translate(0, 0); }
+  25%       { transform: translate(-3px, -2px); }
+  50%       { transform: translate(3px, 2px); }
+  75%       { transform: translate(-2px, 1px); }
+}
+
+body.site-shake {
+  animation: siteShake 0.13s linear;
+}
+
+/* ── RED OVERLAY ── */
+@keyframes redFill {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+#red-overlay {
+  position: fixed;
+  inset: 0;
+  background: #cc0000;
+  opacity: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+#red-overlay.filling {
+  animation: redFill 3s linear forwards;
+}
+
+/* ── CAROUSEL ── */
+#carousel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0d0d0d;
+  z-index: 200000;
+  overflow: hidden;
+}
+
+#carousel.active { display: block; }
+
+#carousel::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.91), rgba(0, 0, 0, 0.91)),
+    url('pictures/spam/noise_background.png') center / cover no-repeat;
+  filter: blur(6px);
+  z-index: 0;
+}
+
+#carousel-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.44s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.44s ease;
+}
+
+.carousel-item-name {
+  color: #cc0000;
+  font-size: clamp(13px, 2vw, 20px);
+  letter-spacing: clamp(1px, 0.4vw, 3px);
+  text-align: center;
+}
+
+.carousel-item-link {
+  color: #444;
+  font-size: clamp(11px, 1.5vw, 15px);
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: color 0.15s;
+  cursor: url('cursor/mouse_click.png') 0 0, pointer;
+}
+
+.carousel-item-link:hover { color: #888; }
+
+.carousel-img {
+  display: block;
+  cursor: url('cursor/mouse_click.png') 0 0, pointer;
+  user-select: none;
+  transition: max-height 0.44s ease, max-width 0.44s ease;
+}
+
+.carousel-item.ci-center {
+  z-index: 2;
+}
+
+.carousel-item.ci-side {
+  z-index: 1;
+}
+
+.carousel-item.ci-center .carousel-img {
+  max-height: 72vh;
+  max-width: 44vw;
+}
+
+.carousel-item.ci-side .carousel-img {
+  max-height: 50vh;
+  max-width: 20vw;
+}
+
+.carousel-btn {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: clamp(28px, 4vw, 48px);
+  letter-spacing: -4px;
+  line-height: 1;
+  color: #cc0000;
+  background: transparent;
+  border: 2px solid #cc0000;
+  padding: clamp(8px, 2vw, 16px) clamp(10px, 2vw, 18px) clamp(6px, 1.5vw, 10px) clamp(8px, 1.5vw, 14px);
+  cursor: url('cursor/mouse_click.png') 0 0, pointer;
+  z-index: 200001;
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+.carousel-btn:hover {
+  background: #cc0000;
+  color: #fff;
+}
+
+#carousel-prev { left: clamp(8px, 2vw, 24px); }
+#carousel-next { right: clamp(8px, 2vw, 24px); }
+
+/* ── CAROUSEL DOTS ── */
+#carousel-dots {
+  position: absolute;
+  bottom: clamp(10px, 3vh, 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(4px, 0.7vw, 7px);
+  max-width: 90vw;
+  z-index: 200001;
+}
+
+.carousel-dot {
+  width: clamp(5px, 0.9vw, 8px);
+  height: clamp(5px, 0.9vw, 8px);
+  border-radius: 50%;
+  background: #2a2a2a;
+  border: 1px solid #cc0000;
+  cursor: url('cursor/mouse_click.png') 0 0, pointer;
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.carousel-dot:hover { background: #660000; transform: scale(1.2); }
+.carousel-dot.active { background: #cc0000; transform: scale(1.3); }
+
+/* ── PROGRESS BAR ── */
+#ad-progress {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: #080808;
+  border-top: 1px solid #2a0000;
+  z-index: 99997;
+  overflow: hidden;
+  display: none;
+}
+
+#ad-progress-fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: #cc0000;
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#ad-progress-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: clamp(10px, 1.5vw, 13px);
+  letter-spacing: 3px;
+  pointer-events: none;
+  text-shadow: 0 0 6px #000, 0 0 12px #000;
+}
+
+/* ── POPUP ADS ── */
+.popup {
+  position: fixed;
+  z-index: 1000;
+  filter: drop-shadow(6px 6px 18px rgba(0, 0, 0, 0.95));
+  animation: popIn 0.14s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.75); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.popup-inner {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.popup-inner img {
+  display: block;
+  max-height: 80vh;
+  max-width: 86vw;
+  cursor: url('cursor/mouse_click.png') 0 0, pointer;
+  transition: filter 0.15s;
+}
+
+.popup:hover .popup-inner img {
+  filter: brightness(1.12);
+}
+
+/* Невидимая зона поверх кнопок окна (_, □, X) в правом верхнем углу.
+   Картинки рисуют свой фрейм сами, мы просто перекрываем эту область. */
+.popup-close-zone {
+  position: absolute;
+  cursor: url('cursor/mouse_click.png') 0 0, pointer;
+  z-index: 10;
+  transition: background 0.08s;
+  border-radius: 1px;
+}
+
+.popup-close-zone:hover {
+  background:
+    radial-gradient(circle at top left,     rgba(255, 40, 40, 0.65) 0%, transparent 65%),
+    radial-gradient(circle at top right,    rgba(255, 40, 40, 0.65) 0%, transparent 65%),
+    radial-gradient(circle at bottom left,  rgba(255, 40, 40, 0.65) 0%, transparent 65%),
+    radial-gradient(circle at bottom right, rgba(255, 40, 40, 0.65) 0%, transparent 65%);
+  box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.25);
+}
