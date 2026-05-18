@@ -1,28 +1,58 @@
-// ── Фейковая загрузка перед FATHER_OS ──────────────────
+// ── Настоящая загрузка перед FATHER_OS: прелоадим все картинки ──
 (function bootLoader() {
-  const BOOT_MS = 3000;
+  const MIN_MS = 800;    // минимум показа экрана, чтобы не моргнуло на быстрой сети
+  const MAX_MS = 45000;  // потолок — если что-то зависло, не висим вечно
+
   document.addEventListener('DOMContentLoaded', () => {
     const screen = document.getElementById('boot-screen');
     const fill   = document.getElementById('boot-bar-fill');
     const txt    = document.getElementById('boot-pct');
     if (!screen) return;
 
-    const start = performance.now();
-    function tick(now) {
-      const t   = Math.min(1, (now - start) / BOOT_MS);
-      const pct = Math.floor(t * 100);
+    // Все картинки, нужные ивенту: арты, спам, коллаж, фон, кнопки
+    const assets = [
+      ...artAds.map(a => a.img),
+      ...spamFiles,
+      'pictures/spam/noise_collab.png',
+      'pictures/spam/noise_background.png',
+      'button.png',
+      'button_back.png',
+      'icon.png',
+    ];
+    const total = assets.length;
+    let loaded  = 0;
+
+    function refresh() {
+      const pct = total ? Math.floor((loaded / total) * 100) : 100;
       if (fill) fill.style.width = pct + '%';
       if (txt)  txt.textContent  = pct + '%';
-      if (t < 1) requestAnimationFrame(tick);
-      else {
-        if (txt) txt.textContent = '100%';
+    }
+    function bump() { loaded++; refresh(); }
+
+    assets.forEach(src => {
+      const img = new Image();
+      img.onload  = bump;
+      img.onerror = bump; // 404/ошибки не должны клинить буут
+      img.src = src;
+    });
+    refresh();
+
+    const start = performance.now();
+    function check() {
+      const elapsed = performance.now() - start;
+      const done    = loaded >= total;
+      if ((done && elapsed >= MIN_MS) || elapsed >= MAX_MS) {
+        if (fill) fill.style.width = '100%';
+        if (txt)  txt.textContent  = '100%';
         setTimeout(() => {
           screen.classList.add('hidden');
           setTimeout(() => screen.remove(), 600);
         }, 250);
+      } else {
+        requestAnimationFrame(check);
       }
     }
-    requestAnimationFrame(tick);
+    requestAnimationFrame(check);
   });
 })();
 
