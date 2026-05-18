@@ -10,11 +10,16 @@
 </head>
 <body>
 
+<div id="boot-screen">
+  <div class="boot-bar"><div id="boot-bar-fill"></div></div>
+  <div id="boot-pct">0%</div>
+</div>
+
 <div class="desktop">
   <div class="main-win-wrapper">
   <div class="main-win">
     <div class="win-titlebar">
-      <span class="win-title">FATHER_OS — Управление сессией</span>
+      <span class="win-title"><span class="win-title-os">FATHER_OS</span> — Управление сессией</span>
       <div class="win-btns">
         <div class="win-btn">_</div>
         <div class="win-btn">□</div>
@@ -36,14 +41,38 @@
 </div>
 
 <div id="desktop-credits">
-  Идея сайта — Father (MaxSkull3) &nbsp;·&nbsp; Навайбкодил — Baicherra, [System Dog]
+  Идея сайта — Father (MaxSkull3) &nbsp;·&nbsp; Навайбкодил — Baicherra и [System Dog]
 </div>
 
 <div id="red-overlay"></div>
+<div id="bg-flicker"></div>
+
+<div id="menu-screen">
+  <div class="menu-logo">ШУМ</div>
+  <div class="menu-panel">
+    <div class="menu-panel-title">[-] РАЗДЕЛЫ</div>
+    <button class="menu-btn" id="btn-collab"><span class="tree-line">├─</span> <span class="folder-ico">[▦]</span> Основной коллаж</button>
+    <button class="menu-btn" id="btn-gallery"><span class="tree-line">├─</span> <span class="folder-ico">[▥]</span> Галерея</button>
+    <button class="menu-btn" id="btn-yandex"><span class="tree-line">└─</span> <span class="folder-ico">[↗]</span> Ссылка на Яндекс.Диск</button>
+  </div>
+  <div class="menu-participants">
+    <div class="menu-participants-title">УЧАСТНИКИ ИВЕНТА:</div>
+    <div class="menu-participants-list">
+      RUSSIAN&nbsp;BORZOI · Rachok · Jester · Myriam · Baicherra · Turtix · Berk · Vzoltus · D(evil) · xenoren575 · Anx_art · Pifagor · YAMA · T2Rrr · nerdyyyy · ERROR · Stas · Father
+    </div>
+  </div>
+</div>
+
+<div id="collab-view">
+  <button class="back-btn" id="collab-back"><img src="button_back.png" alt="back" draggable="false"></button>
+  <img id="collab-img" src="pictures/spam/noise_collab.png" alt="Основной коллаж" draggable="false">
+  <div id="collab-caption">noise_collab.png &nbsp;·&nbsp; 3850 × 3850 px &nbsp;·&nbsp; 9.7 МБ</div>
+</div>
 
 <div id="carousel">
-  <button id="carousel-prev" class="carousel-btn">&lt;&lt;</button>
-  <button id="carousel-next" class="carousel-btn">&gt;&gt;</button>
+  <button class="back-btn" id="carousel-back"><img src="button_back.png" alt="back" draggable="false"></button>
+  <button id="carousel-prev" class="carousel-btn"><img src="button.png" alt="prev" draggable="false"></button>
+  <button id="carousel-next" class="carousel-btn"><img src="button.png" alt="next" draggable="false"></button>
   <div id="carousel-stage">
     <div class="carousel-item ci-side" id="ci-0">
       <span class="carousel-item-name"></span>

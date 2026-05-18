@@ -1,11 +1,48 @@
-// ── Звук появления попапа ──────────────────────────────
-const popSound    = new Audio('windows-7-ding.wav');
-const navSound    = new Audio('windows-7-navigation-start.wav');
+// ── Фейковая загрузка перед FATHER_OS ──────────────────
+(function bootLoader() {
+  const BOOT_MS = 3000;
+  document.addEventListener('DOMContentLoaded', () => {
+    const screen = document.getElementById('boot-screen');
+    const fill   = document.getElementById('boot-bar-fill');
+    const txt    = document.getElementById('boot-pct');
+    if (!screen) return;
+
+    const start = performance.now();
+    function tick(now) {
+      const t   = Math.min(1, (now - start) / BOOT_MS);
+      const pct = Math.floor(t * 100);
+      if (fill) fill.style.width = pct + '%';
+      if (txt)  txt.textContent  = pct + '%';
+      if (t < 1) requestAnimationFrame(tick);
+      else {
+        if (txt) txt.textContent = '100%';
+        setTimeout(() => {
+          screen.classList.add('hidden');
+          setTimeout(() => screen.remove(), 600);
+        }, 250);
+      }
+    }
+    requestAnimationFrame(tick);
+  });
+})();
+
+// ── Звуки: warn / click / hover / event_start ──────────
+const SFX = {
+  warn:       new Audio('sounds/sound_warn.mp3'),
+  click:      new Audio('sounds/mouse_click.mp3'),
+  hover:      new Audio('sounds/mouse_hover.mp3'),
+  eventStart: new Audio('sounds/event_start.mp3'),
+};
+Object.values(SFX).forEach(a => { a.preload = 'auto'; });
+
 const popSoundPool = [];
 
 function playPopSound(pitch = 1.0) {
-  const s = popSound.cloneNode();
-  s.volume = 0.6;
+  const s = SFX.warn.cloneNode();
+  s.volume = 0.5;
+  s.preservesPitch = false;
+  s.mozPreservesPitch = false;
+  s.webkitPreservesPitch = false;
   s.playbackRate = pitch;
   s.play().catch(() => {});
   popSoundPool.push(s);
@@ -20,33 +57,120 @@ function stopAllPopSounds() {
   popSoundPool.length = 0;
 }
 
-function playNavSound() {
-  const s = navSound.cloneNode();
-  s.volume = 0.6;
+function playClickSound() {
+  const s = SFX.click.cloneNode();
+  s.volume = 0.75;
   s.play().catch(() => {});
 }
 
+function playHoverSound() {
+  const s = SFX.hover.cloneNode();
+  s.volume = 0.75;
+  s.play().catch(() => {});
+}
+
+function playEventStartSound(pitch = 1.0) {
+  const s = SFX.eventStart;
+  try { s.pause(); s.currentTime = 0; } catch (e) {}
+  s.volume = 0.75;
+  s.preservesPitch = false;
+  s.mozPreservesPitch = false;
+  s.webkitPreservesPitch = false;
+  s.playbackRate = pitch;
+  s.play().catch(() => {});
+}
+
+function attachHoverSound(el) {
+  if (!el || el._hoverAttached) return;
+  el._hoverAttached = true;
+  el.addEventListener('mouseenter', playHoverSound);
+}
+
+// ── Эмбиент: hello_menu (+ hello_event при старте) → menu ──
+const AMB = {
+  helloMenu:   new Audio('sounds/ambient/ambient_noise_hello_menu.mp3'),
+  helloEvent:  new Audio('sounds/ambient/ambient_noise_hello_event.mp3'),
+  menu:        new Audio('sounds/ambient/ambient_noise_menu.mp3'),
+  jingleRetro: new Audio('sounds/ambient/noise_jingle_retro.mp3'),
+};
+const AMB_VOL = { helloMenu: 0.3, helloEvent: 0.2, menu: 0.3, jingleRetro: 0.75 };
+const AMB_FADE_MS = 800;
+Object.values(AMB).forEach(a => { a.loop = true; a.volume = 0; a.preload = 'auto'; });
+
+function fadeAudio(audio, from, to, ms, onDone) {
+  try { audio.volume = Math.max(0, Math.min(1, from)); } catch (e) {}
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - start) / ms);
+    try { audio.volume = Math.max(0, Math.min(1, from + (to - from) * t)); } catch (e) {}
+    if (t < 1) requestAnimationFrame(step);
+    else if (onDone) onDone();
+  }
+  requestAnimationFrame(step);
+}
+
+function startAmbient(audio, target, fadeMs = AMB_FADE_MS) {
+  audio.volume = 0;
+  audio.play().catch(() => {});
+  fadeAudio(audio, 0, target, fadeMs);
+}
+
+function stopAmbient(audio, fadeMs = AMB_FADE_MS) {
+  const startVol = audio.volume;
+  fadeAudio(audio, startVol, 0, fadeMs, () => {
+    try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+  });
+}
+
+let _ambHelloStarted = false;
+let _ambHelloAttempt = false;
+function startHelloMenuAmbient() {
+  if (_ambHelloStarted || _ambHelloAttempt) return;
+  _ambHelloAttempt = true;
+  AMB.helloMenu.volume = 0;
+  Promise.resolve(AMB.helloMenu.play()).then(() => {
+    _ambHelloStarted = true;
+    _ambHelloAttempt = false;
+    fadeAudio(AMB.helloMenu, 0, AMB_VOL.helloMenu, AMB_FADE_MS);
+    _ambDetachUnlock();
+  }).catch(() => {
+    _ambHelloAttempt = false;
+  });
+}
+
+function _ambUnlockOnce() { startHelloMenuAmbient(); }
+function _ambDetachUnlock() {
+  window.removeEventListener('pointerdown', _ambUnlockOnce);
+  window.removeEventListener('touchstart',  _ambUnlockOnce);
+  window.removeEventListener('keydown',     _ambUnlockOnce);
+}
+window.addEventListener('pointerdown', _ambUnlockOnce, { passive: true });
+window.addEventListener('touchstart',  _ambUnlockOnce, { passive: true });
+window.addEventListener('keydown',     _ambUnlockOnce);
+// Пробуем сразу — если браузер не разрешит, сработает по первому жесту выше
+document.addEventListener('DOMContentLoaded', () => { startHelloMenuAmbient(); });
+
 // ── Пул 1: арт-работы коллабораторов ──────────────────
 const artAds = [
-  { img: 'pictures/art_Borzoi.png',  link: 'https://t.me/r_borzoi' },
-  { img: 'pictures/art_Rachok.png',  link: 'https://t.me/RachoksPromiseL' },
-  { img: 'pictures/art_Jester.png',  link: 'https://t.me/smugJester257' },
-  { img: 'pictures/art_Mira.png',    link: 'https://t.me/Myriam_opyat_est_ludeiv' },
-  { img: 'pictures/art_Bai.PNG',     link: 'https://t.me/baicantdie' },
-  { img: 'pictures/art_Turtix.png',  link: 'https://turtix.itch.io/' },
-  { img: 'pictures/art_Berk.png',    link: 'https://t.me/cursedabandoned' },
-  { img: 'pictures/art_Vzoltus.png', link: 'https://t.me/youkhowDa' },
-  { img: 'pictures/art_T2Rrr.png',   link: 'https://t.me/T2Rrrrr' },
-  { img: 'pictures/art_Xenoren.png', link: 'https://t.me/xenoren575' },
-  { img: 'pictures/art_Anx.png',     link: 'https://t.me/Anx_art' },
-  { img: 'pictures/art_Pifagor.png', link: 'https://t.me/pifagorsshelter' },
-  { img: 'pictures/art_Error.png',   link: 'https://t.me/Rat_Tail_Eternity' },
-  { img: 'pictures/art_Error2.png',  link: 'https://t.me/Rat_Tail_Eternity' },
-  { img: 'pictures/art_Nerdy.png',   link: 'https://t.me/nerdyyyytgk' },
-  { img: 'pictures/art_Stas.png',    link: 'https://t.me/Stas_boys' },
-  { img: 'pictures/art_D(evil).png', link: 'https://t.me/deeyavolskoe' },
-  { img: 'pictures/art_Yama.png',    link: 'https://t.me/yamakartini' },
-  { img: 'pictures/art_Father.png',  link: 'https://t.me/baicantdie' },
+  { name: 'RUSSIAN BORZOI', img: 'pictures/art_Borzoi.png',  link: 'https://t.me/r_borzoi' },
+  { name: 'Rachok',         img: 'pictures/art_Rachok.png',  link: 'https://t.me/RachoksPromiseL' },
+  { name: 'Jester',         img: 'pictures/art_Jester.png',  link: 'https://t.me/smugJester257' },
+  { name: 'Myriam',         img: 'pictures/art_Mira.png',    link: 'https://t.me/Myriam_opyat_est_ludeiv' },
+  { name: 'Baicherra',      img: 'pictures/art_Bai.PNG',     link: 'https://t.me/baicantdie' },
+  { name: 'Turtix',         img: 'pictures/art_Turtix.png',  link: 'https://turtix.itch.io/' },
+  { name: 'Berk',           img: 'pictures/art_Berk.png',    link: 'https://t.me/cursedabandoned' },
+  { name: 'Vzoltus',        img: 'pictures/art_Vzoltus.png', link: 'https://t.me/youkhowDa' },
+  { name: 'T2Rrr',          img: 'pictures/art_T2Rrr.png',   link: 'https://t.me/T2Rrrrr' },
+  { name: 'xenoren575',     img: 'pictures/art_Xenoren.png', link: 'https://t.me/xenoren575' },
+  { name: 'Anx_art',        img: 'pictures/art_Anx.png',     link: 'https://t.me/Anx_art' },
+  { name: 'Pifagor',        img: 'pictures/art_Pifagor.png', link: 'https://t.me/pifagorsshelter' },
+  { name: 'ERROR',          img: 'pictures/art_Error.png',   link: 'https://t.me/Rat_Tail_Eternity' },
+  { name: 'ERROR',          img: 'pictures/art_Error2.png',  link: 'https://t.me/Rat_Tail_Eternity' },
+  { name: 'nerdyyyy',       img: 'pictures/art_Nerdy.png',   link: 'https://t.me/nerdyyyytgk' },
+  { name: 'Stas',           img: 'pictures/art_Stas.png',    link: 'https://t.me/Stas_boys' },
+  { name: 'D(evil)',        img: 'pictures/art_D(evil).png', link: 'https://t.me/deeyavolskoe' },
+  { name: 'YAMA',           img: 'pictures/art_Yama.png',    link: 'https://t.me/yamakartini' },
+  { name: 'Father',         img: 'pictures/art_Father.png',  link: 'https://t.me/fatherplace' },
 ];
 
 // ── Пул 2: спам-файлы ─────────────────────────────────
@@ -75,6 +199,7 @@ let spamStarted       = false;
 let performanceOver   = false;
 let performanceActive = false;
 let _topZ             = 9000;
+const IS_MOBILE       = window.matchMedia('(pointer: coarse)').matches;
 
 // ── Прогресс-бар ───────────────────────────────────────
 let _pctDisplayed = 0;
@@ -84,6 +209,7 @@ function _tickPct() {
   if (_pctDisplayed >= _pctTarget) return;
   _pctDisplayed++;
   document.getElementById('ad-progress-text').textContent = _pctDisplayed + '%';
+  AMB.jingleRetro.volume = Math.max(0, Math.min(1, AMB_VOL.jingleRetro * (_pctDisplayed / 100)));
   requestAnimationFrame(_tickPct);
 }
 
@@ -128,12 +254,15 @@ function removePopup(popup) {
 // ── Спам-фаза: спам + красный одновременно ────────────
 function beginSpamPhase() {
   const statusEl = document.querySelector('.status-line');
-  statusEl.textContent = '▌КРИТИЧЕСКАЯ ОШИБКА ▐';
+  setItalicText(statusEl, '▌КРИТИЧЕСКАЯ ОШИБКА ▐');
   statusEl.className   = 'status-line critical';
 
   const overlay = document.getElementById('red-overlay');
   overlay.classList.add('filling');
   spawnAll();
+  // Низкий event_start стартует заранее: tail из MP3 + pitch 0.4 ≈ 1.5s «разгона»
+  // до бабаха — попадает в момент появления меню при endSpamPhase в +3000ms.
+  setTimeout(() => playEventStartSound(0.4), 1500);
   setTimeout(endSpamPhase, 3000);
 }
 
@@ -141,6 +270,18 @@ function beginSpamPhase() {
 function endSpamPhase() {
   performanceOver = true;
   stopAllPopSounds();
+
+  // эмбиент: hello-слои уходят, включается menu; джингл остаётся низким и тихим
+  stopAmbient(AMB.helloMenu);
+  stopAmbient(AMB.helloEvent);
+  startAmbient(AMB.menu, AMB_VOL.menu);
+
+  // Джингл продолжает играть в меню ШУМ — низкий pitch + 15% громкости
+  AMB.jingleRetro.preservesPitch = false;
+  AMB.jingleRetro.mozPreservesPitch = false;
+  AMB.jingleRetro.webkitPreservesPitch = false;
+  AMB.jingleRetro.playbackRate = 0.5;
+  fadeAudio(AMB.jingleRetro, AMB.jingleRetro.volume, 0.15, AMB_FADE_MS);
 
   activePopups.forEach(p => p.remove());
   activePopups.length = 0;
@@ -156,8 +297,86 @@ function endSpamPhase() {
   void overlay.offsetWidth;
   overlay.style.transition = 'opacity 0.8s ease';
   overlay.style.opacity    = '0';
-  initCarousel();
+  showMenu();
   setTimeout(() => { overlay.style.display = 'none'; }, 800);
+}
+
+// ── Меню ───────────────────────────────────────────────
+function showMenu() {
+  document.getElementById('menu-screen').classList.add('active');
+  document.getElementById('collab-view').classList.remove('active');
+  document.getElementById('carousel').classList.remove('active');
+}
+
+function showCollab() {
+  playClickSound();
+  document.getElementById('menu-screen').classList.remove('active');
+  document.getElementById('collab-view').classList.add('active');
+}
+
+function showGallery() {
+  playClickSound();
+  document.getElementById('menu-screen').classList.remove('active');
+  initCarousel();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-collab').addEventListener('click', showCollab);
+  document.getElementById('btn-gallery').addEventListener('click', showGallery);
+  document.getElementById('btn-yandex').addEventListener('click', () => { playClickSound(); window.open('https://disk.yandex.ru/d/3IwFRMTWIP-kPg', '_blank'); });
+  document.getElementById('collab-back').addEventListener('click', () => { playClickSound(); showMenu(); });
+  document.getElementById('carousel-back').addEventListener('click', () => { playClickSound(); showMenu(); });
+  [
+    'logoutBtn','btn-collab','btn-gallery','btn-yandex',
+    'collab-back','carousel-back','carousel-prev','carousel-next'
+  ].forEach(id => attachHoverSound(document.getElementById(id)));
+  italicizeUppercase(document.body);
+});
+
+// ── Курсив для заглавных букв (только в смешанных словах) ─
+const UP_RE  = /[A-ZА-ЯЁ]/;
+const LOW_RE = /[a-zа-яё]/;
+function italicizeUppercase(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const p = node.parentNode;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      const tag = p.nodeName;
+      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA') return NodeFilter.FILTER_REJECT;
+      if (p.classList && p.classList.contains('italic-up')) return NodeFilter.FILTER_REJECT;
+      return UP_RE.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  for (const node of nodes) {
+    const text   = node.nodeValue;
+    const tokens = text.split(/(\s+)/);   // сохраняем пробелы между токенами
+    const frag   = document.createDocumentFragment();
+    for (const tok of tokens) {
+      if (UP_RE.test(tok) && LOW_RE.test(tok)) {
+        // смешанный регистр - курсивим заглавные побуквенно
+        for (let i = 0; i < tok.length; i++) {
+          if (UP_RE.test(tok[i])) {
+            const sp = document.createElement('span');
+            sp.className   = 'italic-up';
+            sp.textContent = tok[i];
+            frag.appendChild(sp);
+          } else {
+            frag.appendChild(document.createTextNode(tok[i]));
+          }
+        }
+      } else {
+        frag.appendChild(document.createTextNode(tok));
+      }
+    }
+    node.parentNode.replaceChild(frag, node);
+  }
+}
+function setItalicText(el, text) {
+  el.textContent = text;
+  italicizeUppercase(el);
 }
 
 // ── Карусель ───────────────────────────────────────────
@@ -182,8 +401,9 @@ function ciLoadContent(i, artIdx) {
   const el  = document.getElementById('ci-' + i);
   const img = el.querySelector('.carousel-img');
   img.src      = ad.img;
-  img.onclick  = () => window.open(ad.link, '_blank');
-  el.querySelector('.carousel-item-name').textContent = getArtName(ad.img);
+  img.onclick  = () => { playClickSound(); window.open(ad.link, '_blank'); };
+  attachHoverSound(img);
+  setItalicText(el.querySelector('.carousel-item-name'), ad.name || getArtName(ad.img));
   const lnk = el.querySelector('.carousel-item-link');
   lnk.href        = ad.link;
   lnk.textContent = ad.link.replace(/^https?:\/\//, '');
@@ -214,7 +434,8 @@ function updateDots() {
   artAds.forEach((_, i) => {
     const d = document.createElement('div');
     d.className = 'carousel-dot' + (i === carouselIndex ? ' active' : '');
-    d.onclick   = () => jumpToArt(i);
+    d.onclick   = () => { playClickSound(); jumpToArt(i); };
+    attachHoverSound(d);
     box.appendChild(d);
   });
 }
@@ -242,8 +463,8 @@ function initCarousel() {
     ciLoadContent(i, carouselIndex + (i - 2));
     ciPlace(i, i - 2, true);
   }
-  document.getElementById('carousel-prev').onclick = () => { playNavSound(); switchArt(-1); };
-  document.getElementById('carousel-next').onclick = () => { playNavSound(); switchArt(1); };
+  document.getElementById('carousel-prev').onclick = () => { playClickSound(); switchArt(-1); };
+  document.getElementById('carousel-next').onclick = () => { playClickSound(); switchArt(1); };
   updateDots();
 }
 
@@ -286,7 +507,8 @@ function spawnAll() {
 
   for (let i = 0; i < 500; i++) {
     const file = spamFiles[Math.floor(Math.random() * spamFiles.length)];
-    spawnOnePopup({ img: file, link: 'https://t.me/baicantdie' }, delay, 1.0, 'spam');
+    const pitch = 1.0 + i * 0.01; // 1.0 → 6.0 — нарастающая истерика
+    spawnOnePopup({ img: file, link: 'https://t.me/baicantdie' }, delay, pitch, 'spam');
     delay   += interval;
     interval = Math.max(MIN, interval * DECAY);
   }
@@ -297,8 +519,8 @@ function spawnGroup() {
   const r     = Math.random();
   const count = r < 0.10 ? 3 : r < 0.40 ? 2 : 1;
   const safe  = Math.min(count, artQueue.length); // не выйти за пределы очереди
-  const pitch = safe === 3 ? 1.30 : safe === 2 ? 1.15 : 1.0;
   for (let i = 0; i < safe; i++) {
+    const pitch = 0.80 + Math.random() * 0.40; // 0.80 - 1.20
     spawnOnePopup(artQueue.pop(), i * 160, pitch, 'art');
   }
 }
@@ -326,15 +548,19 @@ function spawnOnePopup(ad, delay, pitch = 1.0, type = 'art') {
   let closeZone = null;
 
   if (type === 'art') {
-    img.title   = 'Перейти к автору';
-    img.onclick = () => window.open(ad.link, '_blank');
+    if (!IS_MOBILE) {
+      img.title   = 'Перейти к автору';
+      img.onclick = () => { playClickSound(); window.open(ad.link, '_blank'); };
+    } else {
+      img.style.cursor = 'default';
+    }
 
     closeZone = document.createElement('div');
     closeZone.className = 'popup-close-zone';
-    closeZone.onclick   = (e) => { e.stopPropagation(); playNavSound(); removePopup(popup); };
+    closeZone.onclick   = (e) => { e.stopPropagation(); playClickSound(); removePopup(popup); };
     inner.appendChild(closeZone);
 
-    popup.addEventListener('mouseenter', () => { popup.style.zIndex = ++_topZ; });
+    popup.addEventListener('mouseenter', () => { playHoverSound(); popup.style.zIndex = ++_topZ; });
     popup.addEventListener('mouseleave', () => { popup.style.zIndex = popup.dataset.baseZ || 1000; });
   } else {
     popup.style.pointerEvents = 'none';
@@ -342,7 +568,7 @@ function spawnOnePopup(ad, delay, pitch = 1.0, type = 'art') {
 
   popup.appendChild(inner);
 
-  function calcSf() {
+  function calcFit() {
     const maxCssW = window.innerWidth  * 0.86;
     const maxCssH = window.innerHeight * 0.80;
     let rW = img.naturalWidth  || 300;
@@ -354,7 +580,7 @@ function spawnOnePopup(ad, delay, pitch = 1.0, type = 'art') {
 
   function applyCloseZone() {
     if (!closeZone) return;
-    const { sf } = calcSf();
+    const { sf } = calcFit();
     closeZone.style.top    = (15 * sf) + 'px';
     closeZone.style.right  = (17 * sf) + 'px';
     closeZone.style.width  = (61 * sf) + 'px';
@@ -362,7 +588,7 @@ function spawnOnePopup(ad, delay, pitch = 1.0, type = 'art') {
   }
 
   function place() {
-    const { sf, rW, rH } = calcSf();
+    const { sf, rW, rH } = calcFit();
     if (closeZone) {
       closeZone.style.top    = (15 * sf) + 'px';
       closeZone.style.right  = (17 * sf) + 'px';
@@ -385,6 +611,24 @@ function spawnOnePopup(ad, delay, pitch = 1.0, type = 'art') {
       document.body.appendChild(popup);
       activePopups.push(popup);
       playPopSound(pitch);
+
+      // ── Оптимизация: чистим старые спам-окна ────────
+      if (type === 'spam') {
+        const MAX_SPAM = 40;
+        let count = 0;
+        for (let i = activePopups.length - 1; i >= 0; i--) {
+          if (activePopups[i].dataset.type === 'spam') {
+            count++;
+            if (count > MAX_SPAM) {
+              const old = activePopups[i];
+              old.classList.add('fading-out');
+              setTimeout(() => { old.remove(); }, 260);
+              activePopups.splice(i, 1);
+            }
+          }
+        }
+      }
+
       if (type === 'art') {
         document.body.classList.remove('site-shake');
         void document.body.offsetWidth;
@@ -399,19 +643,22 @@ function spawnOnePopup(ad, delay, pitch = 1.0, type = 'art') {
   else img.onload = place;
 }
 
-// ── Адаптация окна FATHER_OS под размер экрана ─────────
+// ── Адаптация окна FATHER_OS под любой viewport ────────
 function adaptMainWin() {
   const wrapper = document.querySelector('.main-win-wrapper');
   if (!wrapper) return;
   const win = wrapper.querySelector('.main-win');
   wrapper.style.transform = '';
-  const scaleW = Math.min(1, (window.innerWidth  * 0.92) / win.offsetWidth);
-  const scaleH = Math.min(1, (window.innerHeight * 0.92) / win.offsetHeight);
-  const scale  = Math.min(scaleW, scaleH);
-  if (scale < 1) wrapper.style.transform = `scale(${scale.toFixed(4)})`;
+  const sW  = (window.innerWidth  * 0.92) / win.offsetWidth;
+  const sH  = (window.innerHeight * 0.85) / win.offsetHeight;
+  const fit = Math.min(sW, sH);
+  let scale = 1;
+  if (fit < 1)        scale = fit;                          // не помещается — сжать
+  else if (fit > 3.5) scale = Math.min(2.5, fit / 2);       // viewport огромный — увеличить
+  if (scale !== 1) wrapper.style.transform = `scale(${scale.toFixed(4)})`;
 }
 
-// ── Адаптация попапов при изменении зума ───────────────
+// ── Resize: окно + close-zone + клэмп позиций попапов ──
 let _resizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
@@ -430,9 +677,26 @@ window.addEventListener('resize', () => {
   }, 80);
 });
 
+adaptMainWin();
+
+// ── Случайный красный флик фона ────────────────────────
+function scheduleBgFlicker() {
+  const delay = 500 + Math.random() * 2200; // 0.5 - 2.7s
+  setTimeout(() => {
+    const f    = document.getElementById('bg-flicker');
+    const menu = document.getElementById('menu-screen');
+    if (f && menu && menu.classList.contains('active')) {
+      f.style.opacity = '1';
+      setTimeout(() => { f.style.opacity = '0'; }, 20 + Math.random() * 35);
+    }
+    scheduleBgFlicker();
+  }, delay);
+}
+scheduleBgFlicker();
+
 // ── Секретный скип арт-фазы (Z) ───────────────────────
 document.addEventListener('keydown', (e) => {
-  if (e.key !== 'z' && e.key !== 'Z') return;
+  if (e.code !== 'KeyZ') return;
   if (!performanceActive || spamStarted || performanceOver) return;
 
   activePopups.forEach(p => p.remove());
@@ -456,10 +720,18 @@ function flashDesktopBg() {
 
 // ── Старт ──────────────────────────────────────────────
 function startAds(btn) {
-  playNavSound();
+  startHelloMenuAmbient();
+  playClickSound();
+  playEventStartSound();
+  startAmbient(AMB.helloEvent, AMB_VOL.helloEvent);
+  // Ретро-джингл: стартует с нулевой громкостью, нарастает в _tickPct по прогрессу
+  AMB.jingleRetro.volume = 0;
+  AMB.jingleRetro.playbackRate = 1.0; // сброс на случай повторного ивента
+  try { AMB.jingleRetro.currentTime = 0; } catch (e) {}
+  AMB.jingleRetro.play().catch(() => {});
   flashDesktopBg();
   btn.disabled      = true;
-  btn.textContent   = '[ ЗАБЛОКИРОВАННО ]';
+  setItalicText(btn, '[ ЗАБЛОКИРОВАННО ]');
   document.getElementById('desktop-credits').style.display = 'none';
 
   const win = document.querySelector('.main-win');
@@ -468,7 +740,7 @@ function startAds(btn) {
   win.classList.add('win-shake');
 
   const statusEl = document.querySelector('.status-line');
-  statusEl.textContent = '▌ ОШИБКА ▐';
+  setItalicText(statusEl, '▌ ОШИБКА ▐');
   statusEl.className   = 'status-line error';
 
   document.getElementById('ad-progress').style.display = 'block';
@@ -480,5 +752,3 @@ function startAds(btn) {
   updateProgress();
   setTimeout(spawnGroup, 1000);
 }
-
-adaptMainWin();
